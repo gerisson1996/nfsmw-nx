@@ -166,6 +166,16 @@ jobs:
             --game-root /tmp/downpour-game \
             --project-root /tmp/downpour-project
 
+          # The automatic scanner leaves two direct branch targets outside any
+          # discovered function. Seed those exact entrypoints while keeping
+          # call-graph validation enabled.
+          cat >> /tmp/downpour-project/silent_hill_downpour_manifest.toml <<'TOML'
+
+          [entrypoint.functions."0x830D2388"]
+
+          [entrypoint.functions."0x830E82F0"]
+          TOML
+
       - name: Run Downpour codegen
         run: |
           set -o pipefail
