@@ -18,12 +18,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Checkout mesa-switch
-        uses: actions/checkout@v4
-        with:
-          repository: danfromtico/mesa-switch
-          ref: 1a8c1a66d6f
-          path: mesa-switch
-          fetch-depth: 1
+        run: |
+          set -euo pipefail
+          git clone --filter=blob:none https://github.com/danfromtico/mesa-switch.git mesa-switch
+          git -C mesa-switch checkout 1a8c1a66d6f
 
       - name: Apply nfsmw Switch Mesa patch
         run: |
