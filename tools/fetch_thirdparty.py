@@ -70,6 +70,21 @@ def main():
                 os.makedirs(os.path.dirname(dst), exist_ok=True)
                 shutil.copy2(src, dst)
                 copied += 1
+        # Validate critical CMake-based modules after the merge. Existing
+        # placeholder/incomplete directories in a port must not shadow the
+        # complete upstream submodule.
+        for module in required:
+            src_module = os.path.join(source, module)
+            dst_module = os.path.join(target, module)
+            src_cmake = os.path.join(src_module, 'CMakeLists.txt')
+            dst_cmake = os.path.join(dst_module, 'CMakeLists.txt')
+            if os.path.exists(src_cmake) and not os.path.exists(dst_cmake):
+                print(f'repairing incomplete third-party module: {module}')
+                if os.path.exists(dst_module):
+                    shutil.rmtree(dst_module)
+                shutil.copytree(src_module, dst_module, symlinks=True,
+                                ignore=shutil.ignore_patterns('.git'))
+
         print(f'{copied} files copied into sdk/thirdparty, {kept} files of this port kept')
     finally:
         if sys.version_info >= (3, 12):
