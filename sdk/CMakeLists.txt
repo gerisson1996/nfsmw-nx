@@ -1,4 +1,10 @@
 # ReXGlue SDK - Xbox 360 Recompilation Toolkit
+
+# ReXGlue host x86 code uses SSSE3 intrinsics in core and XMA audio paths.
+# Keep this host-specific so the Switch/AArch64 build is unaffected.
+if((CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|amd64|i.86") AND NOT MSVC)
+    add_compile_options(-mssse3)
+endif()
 cmake_minimum_required(VERSION 3.25)
 
 if(APPLE)
