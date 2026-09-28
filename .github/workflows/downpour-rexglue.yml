@@ -78,7 +78,14 @@ jobs:
           cmake -S sdk -B out/host -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_C_COMPILER="$CC" \
-            -DCMAKE_CXX_COMPILER="$CXX" 2>&1 | tee /tmp/rexglue-cmake.log
+            -DCMAKE_CXX_COMPILER="$CXX" \
+            -DSDL_WAYLAND=OFF \
+            -DSDL_X11=ON \
+            -DSDL_TEST_LIBRARY=OFF \
+            -DSDL_TESTS=OFF \
+            -DSDL_EXAMPLES=OFF \
+            -DSDL_INSTALL=OFF \
+            2>&1 | tee /tmp/rexglue-cmake.log
 
       - name: Upload CMake log on failure
         if: failure()
