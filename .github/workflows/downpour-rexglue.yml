@@ -22,7 +22,7 @@ jobs:
       - name: Install host build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build cmake python3 git wget lsb-release software-properties-common gnupg
+          sudo apt-get install -y ninja-build cmake python3 git wget lsb-release software-properties-common gnupg libgtk-3-dev
 
       - name: Install LLVM 20
         run: |
@@ -39,7 +39,14 @@ jobs:
           python3 --version
 
       - name: Fetch ReXGlue third-party sources
-        run: python3 tools/fetch_thirdparty.py
+        env:
+          GIT_TERMINAL_PROMPT: "0"
+        run: |
+          # Some SDK submodules are large. Avoid parallel recursive fetches on the hosted runner.
+          git config --global protocol.version 2
+          git config --global http.version HTTP/1.1
+          git config --global submodule.fetchJobs 1
+          python3 tools/fetch_thirdparty.py
 
       - name: Configure ReXGlue host
         run: |
