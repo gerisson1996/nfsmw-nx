@@ -138,19 +138,21 @@ jobs:
           retention-days: 7
 
 
-      - name: Fetch private Downpour XEX
-        env:
-          DOWNPOUR_ASSETS_TOKEN: ${{ secrets.DOWNPOUR_ASSETS_TOKEN }}
+      - name: Checkout private Downpour assets
+        uses: actions/checkout@v4
+        with:
+          repository: gerisson1996/-downpour-assets
+          token: ${{ secrets.DOWNPOUR_ASSETS_TOKEN }}
+          path: _private_downpour_assets
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Validate private Downpour XEX
         run: |
           set -euo pipefail
-          test -n "$DOWNPOUR_ASSETS_TOKEN"
-          mkdir -p /tmp/downpour-assets
-          git -c http.extraHeader="AUTHORIZATION: bearer $DOWNPOUR_ASSETS_TOKEN" \
-            clone --quiet --depth 1 \
-            https://github.com/gerisson1996/-downpour-assets.git /tmp/downpour-assets
-          install -m 600 /tmp/downpour-assets/default.xex /tmp/Default.xex
+          install -m 600 _private_downpour_assets/default.xex /tmp/Default.xex
           echo "c686cbff8facad6fb6b78ed98e5a5a2f4f19337ef83517f56195a56b0db2c8d7  /tmp/Default.xex" | sha256sum -c -
-          rm -rf /tmp/downpour-assets
+          rm -rf _private_downpour_assets
 
       - name: Initialize Silent Hill Downpour project
         run: |
