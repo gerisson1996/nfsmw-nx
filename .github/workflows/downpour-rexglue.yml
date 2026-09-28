@@ -46,7 +46,16 @@ jobs:
           git config --global protocol.version 2
           git config --global http.version HTTP/1.1
           git config --global submodule.fetchJobs 1
-          python3 tools/fetch_thirdparty.py
+          set -o pipefail
+          python3 tools/fetch_thirdparty.py 2>&1 | tee /tmp/rexglue-thirdparty.log
+
+      - name: Upload dependency log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rexglue-thirdparty-log
+          path: /tmp/rexglue-thirdparty.log
+          if-no-files-found: ignore
 
       - name: Configure ReXGlue host
         run: |
