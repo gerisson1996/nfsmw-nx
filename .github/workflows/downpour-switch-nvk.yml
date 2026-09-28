@@ -104,18 +104,16 @@ jobs:
       - name: Restore devkitPro toolchain from NVK build
         run: |
           set -euo pipefail
-          GXX=$(find /tmp -type f -path '*/devkitA64/bin/aarch64-none-elf-g++' -print -quit)
-          test -n "$GXX"
-          DEVKIT_ROOT=$(dirname "$(dirname "$(dirname "$GXX")")")
-          echo "Found devkitPro at: $DEVKIT_ROOT"
+          DEVKIT_ROOT=/tmp/nvk-sdk/devkitpro
+          test -x "$DEVKIT_ROOT/devkitA64/bin/aarch64-none-elf-g++" || chmod a+x "$DEVKIT_ROOT/devkitA64/bin/aarch64-none-elf-g++"
           sudo rm -rf /opt/devkitpro
           sudo mkdir -p /opt/devkitpro
           for d in devkitA64 libnx portlibs tools; do
             test -d "$DEVKIT_ROOT/$d"
             sudo mv "$DEVKIT_ROOT/$d" "/opt/devkitpro/$d"
           done
-          chmod -R a+rX /opt/devkitpro
-          find /opt/devkitpro/devkitA64/bin /opt/devkitpro/tools/bin -type f -exec chmod a+x {} +
+          sudo chmod -R a+rX /opt/devkitpro
+          sudo find /opt/devkitpro/devkitA64/bin /opt/devkitpro/tools/bin -type f -exec chmod a+x {} +
           echo "DEVKITPRO=/opt/devkitpro" >> "$GITHUB_ENV"
           echo "/opt/devkitpro/tools/bin:/opt/devkitpro/devkitA64/bin" >> "$GITHUB_PATH"
           /opt/devkitpro/devkitA64/bin/aarch64-none-elf-g++ --version
