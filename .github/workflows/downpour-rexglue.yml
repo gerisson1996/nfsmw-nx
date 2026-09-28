@@ -1,3 +1,4 @@
+# build-trigger: cxx17-host
 name: Downpour - ReXGlue host
 
 on:
