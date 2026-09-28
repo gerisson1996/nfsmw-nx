@@ -57,6 +57,13 @@ jobs:
           git config --global submodule.fetchJobs 1
           set -o pipefail
           python3 tools/fetch_thirdparty.py 2>&1 | tee /tmp/rexglue-thirdparty.log
+          # Pin SPIRV-Headers to the exact revision recorded by ReXGlue v0.10.0.
+          # The port's third-party overlay can otherwise leave this module incomplete.
+          rm -rf sdk/thirdparty/spirv-headers
+          git clone --quiet https://github.com/KhronosGroup/SPIRV-Headers.git sdk/thirdparty/spirv-headers
+          git -C sdk/thirdparty/spirv-headers checkout --quiet 29981f65241605e08b0ede4cfeb999fe3b723c6a
+          test -f sdk/thirdparty/spirv-headers/CMakeLists.txt
+
           # The SDK CMake checks for a .git marker to decide whether each
           # vendored dependency is initialized. fetch_thirdparty.py copies
           # source files intentionally without Git metadata, so add harmless
