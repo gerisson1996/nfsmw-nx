@@ -24,6 +24,12 @@ add_library(rexcore OBJECT
 )
 add_library(rex::core ALIAS rexcore)
 
+# memory.cpp uses _mm_shuffle_epi8 on x86/x86_64, which requires SSSE3.
+# This is a host-only compiler feature; Switch/AArch64 is unaffected.
+if((CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|amd64|i.86") AND NOT MSVC)
+    target_compile_options(rexcore PRIVATE -mssse3)
+endif()
+
 if(APPLE)
     # Apple's libc++ still gates std::jthread/std::stop_token behind the
     # experimental-library feature flag. Only timer_queue.cpp uses them, and
