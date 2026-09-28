@@ -2,6 +2,12 @@ name: Downpour - Build Switch NVK SDK
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - downpour-port
+    paths:
+      - ".github/workflows/downpour-switch-nvk.yml"
+      - "mesa/**"
 
 jobs:
   build-nvk:
