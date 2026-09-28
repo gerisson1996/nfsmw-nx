@@ -52,13 +52,19 @@ jobs:
           cp "$VULKAN" /tmp/nvk-sdk/lib/libvulkan.a
           find mesa-switch -type f \( -name 'libnvk.a' -o -name 'libnak*.a' \) -exec cp {} /tmp/nvk-sdk/lib/ \;
           if [ -d mesa-switch/include ]; then cp -a mesa-switch/include/. /tmp/nvk-sdk/include/; fi
+          # Reuse the exact devkitPro toolchain that successfully built Mesa.
+          docker start mesa-switch-build >/dev/null
+          docker cp mesa-switch-build:/opt/devkitpro /tmp/devkitpro
+          docker stop mesa-switch-build >/dev/null
           ls -lh /tmp/nvk-sdk/lib/
 
       - name: Upload NVK SDK
         uses: actions/upload-artifact@v4
         with:
           name: downpour-switch-nvk-sdk
-          path: /tmp/nvk-sdk
+          path: |
+            /tmp/nvk-sdk
+            /tmp/devkitpro
           if-no-files-found: error
           retention-days: 7
 
@@ -91,16 +97,15 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ninja-build cmake python3 git wget xz-utils zstd
 
-      - name: Install devkitPro keyring and packages
+      - name: Restore devkitPro toolchain from NVK build
         run: |
           set -euo pipefail
-          wget -q https://apt.devkitpro.org/install-devkitpro-pacman -O /tmp/install-devkitpro-pacman
-          chmod +x /tmp/install-devkitpro-pacman
-          sudo /tmp/install-devkitpro-pacman
-          sudo dkp-pacman -Syu --noconfirm
-          sudo dkp-pacman -S --needed --noconfirm switch-dev switch-portlibs
+          test -x /tmp/devkitpro/devkitA64/bin/aarch64-none-elf-g++
+          sudo rm -rf /opt/devkitpro
+          sudo mv /tmp/devkitpro /opt/devkitpro
           echo "DEVKITPRO=/opt/devkitpro" >> "$GITHUB_ENV"
           echo "/opt/devkitpro/tools/bin:/opt/devkitpro/devkitA64/bin" >> "$GITHUB_PATH"
+          /opt/devkitpro/devkitA64/bin/aarch64-none-elf-g++ --version
 
       - name: Fetch ReXGlue third-party sources
         run: |
