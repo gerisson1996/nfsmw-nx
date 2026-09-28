@@ -177,7 +177,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_TOOLCHAIN_FILE="$GITHUB_WORKSPACE/tools/switch/cmake/switch-devkitA64.cmake" \
             -DREXSDK_DIR="$GITHUB_WORKSPACE/sdk" \
-            -DREXGLUE_SWITCH_NVK_SDK=/tmp/nvk-sdk \
+            -DREXGLUE_SWITCH_NVK_SDK=/tmp/nvk-sdk/nvk-sdk \
             2>&1 | tee /tmp/downpour-switch-cmake.log
 
       - name: Build Downpour Switch
