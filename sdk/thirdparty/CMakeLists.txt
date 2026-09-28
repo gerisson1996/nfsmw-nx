@@ -275,7 +275,7 @@ else()
     # Linux picks X11 or Wayland at runtime, so the surface has to come from
     # whichever driver SDL chose. Windows presenters go straight from the HWND.
     if(UNIX)
-        set(SDL_VULKAN ON CACHE BOOL "" FORCE)
+        set(SDL_VULKAN OFF CACHE BOOL "" FORCE)
     else()
         set(SDL_VULKAN OFF CACHE BOOL "" FORCE)
     endif()
@@ -299,12 +299,12 @@ set(SDL_OPENGLES OFF CACHE BOOL "" FORCE)
 # Disable dummy drivers
 set(SDL_DISKAUDIO OFF CACHE BOOL "" FORCE)
 set(SDL_DUMMYAUDIO ON CACHE BOOL "" FORCE)
-set(SDL_DUMMYVIDEO OFF CACHE BOOL "" FORCE)
+set(SDL_DUMMYVIDEO ON CACHE BOOL "" FORCE)
 
 # Linux video and audio backends. Both video drivers are always built so the
 # one in use stays a runtime choice.
 if(UNIX AND NOT APPLE)
-    set(SDL_X11               ON  CACHE BOOL "" FORCE)
+    set(SDL_X11               OFF CACHE BOOL "" FORCE)
     option(REXGLUE_HOST_WAYLAND "Enable SDL Wayland backend on Linux host" OFF)
     set(SDL_WAYLAND           ${REXGLUE_HOST_WAYLAND} CACHE BOOL "" FORCE)
     set(SDL_ALSA              OFF CACHE BOOL "" FORCE)
