@@ -258,6 +258,9 @@ set(SDL_SHARED OFF CACHE BOOL "" FORCE)
 set(SDL_STATIC ON CACHE BOOL "" FORCE)
 set(SDL_TEST OFF CACHE BOOL "" FORCE)
 set(SDL_UNIX_CONSOLE_BUILD ON CACHE BOOL "" FORCE)
+set(SDL_IBUS OFF CACHE BOOL "" FORCE)
+set(SDL_FCITX OFF CACHE BOOL "" FORCE)
+set(SDL_LIBUDEV OFF CACHE BOOL "" FORCE)
 
 # Video provides the windowing/event layer; presenters create their own
 # D3D12/Vulkan surfaces from native handles, so SDL_RENDER stays off.
