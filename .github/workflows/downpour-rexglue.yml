@@ -159,10 +159,10 @@ jobs:
           set -euo pipefail
           rm -rf /tmp/downpour-project
           mkdir -p /tmp/downpour-game /tmp/downpour-project
-          cp /tmp/Default.xex /tmp/downpour-game/Default.xex
+          cp /tmp/Default.xex /tmp/downpour-game/default.xex
           sdk/out/linux-amd64/rexglue init \
             --project-name silent_hill_downpour \
-            --xex-path /tmp/downpour-game/Default.xex \
+            --xex-path /tmp/downpour-game/default.xex \
             --game-root /tmp/downpour-game \
             --project-root /tmp/downpour-project
 
@@ -199,4 +199,4 @@ jobs:
       - name: Remove private game binary
         if: always()
         run: |
-          rm -f /tmp/Default.xex /tmp/downpour-game/Default.xex
+          rm -f /tmp/Default.xex /tmp/downpour-game/default.xex
