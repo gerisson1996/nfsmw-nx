@@ -46,6 +46,12 @@ def main():
                 if name == '.git':
                     continue
                 src = os.path.join(dirpath, name)
+                # Some upstream dependencies (notably MoltenVK) contain
+                # symlinks whose targets are not present in this checkout.
+                # They are not needed by the ReXGlue host code generator.
+                if os.path.islink(src) and not os.path.exists(src):
+                    print(f'skipping broken symlink: {src}')
+                    continue
                 dst = os.path.join(target, os.path.relpath(src, source))
                 if os.path.exists(dst):
                     kept += 1
