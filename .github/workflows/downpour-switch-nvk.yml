@@ -116,7 +116,11 @@ jobs:
             sudo mv "$DEVKIT_ROOT/$d" "/opt/devkitpro/$d"
           done
           sudo chmod -R a+rX /opt/devkitpro
-          sudo find /opt/devkitpro/devkitA64/bin /opt/devkitpro/tools/bin -type f -exec chmod a+x {} +
+          sudo find /opt/devkitpro/devkitA64/bin /opt/devkitpro/devkitA64/libexec /opt/devkitpro/tools/bin -type f -exec chmod a+x {} +
+          CC1PLUS=$(find /opt/devkitpro/devkitA64/libexec -type f -name cc1plus -print -quit)
+          test -n "$CC1PLUS"
+          test -x "$CC1PLUS"
+          echo "cc1plus: $CC1PLUS"
           echo "DEVKITPRO=/opt/devkitpro" >> "$GITHUB_ENV"
           echo "/opt/devkitpro/tools/bin:/opt/devkitpro/devkitA64/bin" >> "$GITHUB_PATH"
           /opt/devkitpro/devkitA64/bin/aarch64-none-elf-g++ --version
