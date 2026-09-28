@@ -136,3 +136,65 @@ jobs:
           path: sdk/out/linux-amd64/rexglue
           if-no-files-found: error
           retention-days: 7
+
+
+      - name: Fetch private Downpour XEX
+        env:
+          DOWNPOUR_ASSETS_TOKEN: ${{ secrets.DOWNPOUR_ASSETS_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "$DOWNPOUR_ASSETS_TOKEN"
+          mkdir -p /tmp/downpour-assets
+          git -c http.extraHeader="AUTHORIZATION: bearer $DOWNPOUR_ASSETS_TOKEN" \
+            clone --quiet --depth 1 \
+            https://github.com/gerisson1996/-downpour-assets.git /tmp/downpour-assets
+          install -m 600 /tmp/downpour-assets/default.xex /tmp/Default.xex
+          echo "c686cbff8facad6fb6b78ed98e5a5a2f4f19337ef83517f56195a56b0db2c8d7  /tmp/Default.xex" | sha256sum -c -
+          rm -rf /tmp/downpour-assets
+
+      - name: Initialize Silent Hill Downpour project
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/downpour-project
+          mkdir -p /tmp/downpour-game /tmp/downpour-project
+          cp /tmp/Default.xex /tmp/downpour-game/Default.xex
+          sdk/out/linux-amd64/rexglue init \
+            --project-name silent_hill_downpour \
+            --xex-path /tmp/downpour-game/Default.xex \
+            --game-root /tmp/downpour-game \
+            --project-root /tmp/downpour-project
+
+      - name: Run Downpour codegen
+        run: |
+          set -o pipefail
+          sdk/out/linux-amd64/rexglue -v codegen \
+            /tmp/downpour-project/silent_hill_downpour_manifest.toml \
+            2>&1 | tee /tmp/downpour-codegen.log
+
+      - name: Upload Downpour codegen diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: downpour-codegen-diagnostics
+          path: /tmp/downpour-codegen.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload generated Downpour project
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: downpour-generated-project
+          path: |
+            /tmp/downpour-project/CMakeLists.txt
+            /tmp/downpour-project/CMakePresets.json
+            /tmp/downpour-project/src
+            /tmp/downpour-project/generated
+            /tmp/downpour-project/silent_hill_downpour_manifest.toml
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Remove private game binary
+        if: always()
+        run: |
+          rm -f /tmp/Default.xex /tmp/downpour-game/Default.xex
