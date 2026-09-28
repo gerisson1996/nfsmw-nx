@@ -337,7 +337,7 @@ if(REXGLUE_USE_VULKAN)
     # SPIRV-Headers
     set(SPIRV_HEADERS_ENABLE_TESTS OFF CACHE BOOL "" FORCE)
     set(SPIRV_HEADERS_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
-    add_subdirectory(spirv-headers)
+    add_subdirectory(spirv-headers spirv-headers-build)
 
     add_library(spirv-tools-headers INTERFACE)
     target_include_directories(spirv-tools-headers SYSTEM INTERFACE
