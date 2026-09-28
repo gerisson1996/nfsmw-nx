@@ -99,7 +99,7 @@ jobs:
       - name: Install host tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build cmake python3 git wget xz-utils zstd
+          sudo apt-get install -y ninja-build cmake clang python3 git wget xz-utils zstd
 
       - name: Restore devkitPro toolchain from NVK build
         run: |
@@ -136,6 +136,7 @@ jobs:
       - name: Build host ReXGlue
         run: |
           cmake -S sdk -B out/host -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ \
             -DSDL_WAYLAND=OFF -DSDL_X11=OFF -DSDL_TEST_LIBRARY=OFF \
             -DSDL_TESTS=OFF -DSDL_EXAMPLES=OFF -DSDL_INSTALL=OFF
           cmake --build out/host --target rexglue -j 2
