@@ -105,7 +105,17 @@ jobs:
           if-no-files-found: ignore
 
       - name: Build ReXGlue code generator
-        run: cmake --build out/host --target rexglue -j 2
+        run: |
+          set -o pipefail
+          cmake --build out/host --target rexglue -j 2 2>&1 | tee /tmp/rexglue-build.log
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rexglue-build-log
+          path: /tmp/rexglue-build.log
+          if-no-files-found: ignore
 
       - name: Verify rexglue
         run: |
