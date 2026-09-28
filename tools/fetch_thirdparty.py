@@ -38,6 +38,17 @@ def main():
         run('git', 'fetch', '-q', '--depth', '1', 'origin', COMMIT, cwd=work)
         run('git', 'checkout', '-q', 'FETCH_HEAD', cwd=work)
         run('git', 'submodule', 'update', '--init', '--recursive', cwd=work)
+        # Some Git versions leave an explicitly listed submodule empty after a
+        # recursive update when nested submodule metadata conflicts. Verify the
+        # Vulkan/SPIR-V modules required by CMake and initialize them explicitly.
+        required = ('spirv-headers', 'spirv-tools', 'glslang', 'vulkan-headers',
+                    'vulkan-memory-allocator')
+        for module in required:
+            module_dir = os.path.join(work, 'thirdparty', module)
+            if not os.path.exists(os.path.join(module_dir, 'CMakeLists.txt')):
+                run('git', 'submodule', 'update', '--init', '--force',
+                    f'thirdparty/{module}', cwd=work)
+
         source = os.path.join(work, 'thirdparty')
         copied = kept = 0
         for dirpath, dirnames, filenames in os.walk(source):
