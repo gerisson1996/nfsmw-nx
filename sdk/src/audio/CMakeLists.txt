@@ -13,6 +13,11 @@ add_library(rexaudio OBJECT
     nop/nop_audio_system.cpp
 )
 add_library(rex::audio ALIAS rexaudio)
+
+# XMA sample conversion uses _mm_shuffle_epi8 on x86 hosts (SSSE3).
+if((CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|amd64|i.86") AND NOT MSVC)
+    target_compile_options(rexaudio PRIVATE -mssse3)
+endif()
 if(REXGLUE_PLATFORM_SWITCH)
     # libnx audout backend
     target_sources(rexaudio PRIVATE switch/switch_audio_system.cpp)
