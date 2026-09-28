@@ -2,6 +2,12 @@ name: Downpour - Build Switch NVK SDK
 
 on:
   workflow_dispatch:
+    inputs:
+      build_downpour:
+        description: Build Downpour after NVK
+        required: false
+        default: true
+        type: boolean
   push:
     branches:
       - downpour-port
@@ -63,4 +69,123 @@ jobs:
           name: downpour-switch-nvk-build-log
           path: /tmp/mesa-switch-build.log
           if-no-files-found: ignore
+          retention-days: 7
+
+
+  build-downpour:
+    needs: build-nvk
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Checkout port
+        uses: actions/checkout@v4
+
+      - name: Download NVK SDK
+        uses: actions/download-artifact@v4
+        with:
+          name: downpour-switch-nvk-sdk
+          path: /tmp/nvk-sdk
+
+      - name: Install host tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build cmake python3 git wget xz-utils zstd
+
+      - name: Install devkitPro keyring and packages
+        run: |
+          set -euo pipefail
+          wget -q https://apt.devkitpro.org/install-devkitpro-pacman -O /tmp/install-devkitpro-pacman
+          chmod +x /tmp/install-devkitpro-pacman
+          sudo /tmp/install-devkitpro-pacman
+          sudo dkp-pacman -Syu --noconfirm
+          sudo dkp-pacman -S --needed --noconfirm switch-dev switch-portlibs
+          echo "DEVKITPRO=/opt/devkitpro" >> "$GITHUB_ENV"
+          echo "/opt/devkitpro/tools/bin:/opt/devkitpro/devkitA64/bin" >> "$GITHUB_PATH"
+
+      - name: Fetch ReXGlue third-party sources
+        run: |
+          set -euo pipefail
+          python3 tools/fetch_thirdparty.py
+          rm -rf sdk/thirdparty/spirv-headers
+          git clone --quiet https://github.com/KhronosGroup/SPIRV-Headers.git sdk/thirdparty/spirv-headers
+          git -C sdk/thirdparty/spirv-headers checkout --quiet 29981f65241605e08b0ede4cfeb999fe3b723c6a
+          python3 - <<'PY'
+          from pathlib import Path
+          root = Path("sdk/thirdparty")
+          for child in root.iterdir():
+              if child.is_dir() and any(child.iterdir()):
+                  (child / ".git").mkdir(exist_ok=True)
+          PY
+
+      - name: Build host ReXGlue
+        run: |
+          cmake -S sdk -B out/host -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DSDL_WAYLAND=OFF -DSDL_X11=OFF -DSDL_TEST_LIBRARY=OFF \
+            -DSDL_TESTS=OFF -DSDL_EXAMPLES=OFF -DSDL_INSTALL=OFF
+          cmake --build out/host --target rexglue -j 2
+
+      - name: Checkout private Downpour XEX
+        uses: actions/checkout@v4
+        with:
+          repository: gerisson1996/-downpour-assets
+          token: ${{ secrets.DOWNPOUR_ASSETS_TOKEN }}
+          path: _private_downpour_assets
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Generate Downpour C++
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/downpour-game /tmp/downpour-project
+          mkdir -p /tmp/downpour-game /tmp/downpour-project
+          install -m 600 _private_downpour_assets/default.xex /tmp/downpour-game/default.xex
+          echo "c686cbff8facad6fb6b78ed98e5a5a2f4f19337ef83517f56195a56b0db2c8d7  /tmp/downpour-game/default.xex" | sha256sum -c -
+          sdk/out/linux-amd64/rexglue init \
+            --project-name silent_hill_downpour \
+            --xex-path /tmp/downpour-game/default.xex \
+            --game-root /tmp/downpour-game \
+            --project-root /tmp/downpour-project
+          cat >> /tmp/downpour-project/silent_hill_downpour_manifest.toml <<'TOML'
+
+          [entrypoint.functions."0x830D2388"]
+
+          [entrypoint.functions."0x830E82F0"]
+          TOML
+          sdk/out/linux-amd64/rexglue codegen /tmp/downpour-project/silent_hill_downpour_manifest.toml
+          rm -rf _private_downpour_assets /tmp/downpour-game
+
+      - name: Configure Downpour for Switch
+        run: |
+          set -o pipefail
+          cmake -S /tmp/downpour-project -B /tmp/downpour-build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_TOOLCHAIN_FILE="$GITHUB_WORKSPACE/tools/switch/cmake/switch-devkitA64.cmake" \
+            -DREXSDK_DIR="$GITHUB_WORKSPACE/sdk" \
+            -DREXGLUE_SWITCH_NVK_SDK=/tmp/nvk-sdk \
+            2>&1 | tee /tmp/downpour-switch-cmake.log
+
+      - name: Build Downpour Switch
+        run: |
+          set -o pipefail
+          cmake --build /tmp/downpour-build -j 2 2>&1 | tee /tmp/downpour-switch-build.log
+
+      - name: Upload Switch diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: downpour-switch-diagnostics
+          path: |
+            /tmp/downpour-switch-cmake.log
+            /tmp/downpour-switch-build.log
+            /tmp/downpour-build/CMakeFiles/CMakeConfigureLog.yaml
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload Downpour NRO
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: silent-hill-downpour-switch
+          path: /tmp/downpour-build/**/*.nro
+          if-no-files-found: error
           retention-days: 7
