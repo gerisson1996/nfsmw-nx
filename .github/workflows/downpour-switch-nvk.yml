@@ -1,0 +1,62 @@
+name: Downpour - Build Switch NVK SDK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-nvk:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Checkout port patches
+        uses: actions/checkout@v4
+
+      - name: Checkout mesa-switch
+        uses: actions/checkout@v4
+        with:
+          repository: danfromtico/mesa-switch
+          ref: 1a8c1a66d6f
+          path: mesa-switch
+          fetch-depth: 1
+
+      - name: Apply nfsmw Switch Mesa patch
+        run: |
+          set -euo pipefail
+          cd mesa-switch
+          git apply ../mesa/mesa-switch-nfsmw.patch
+
+      - name: Build NVK Switch with upstream Docker builder
+        run: |
+          set -o pipefail
+          cd mesa-switch
+          chmod +x build-switch.sh
+          ./build-switch.sh 2>&1 | tee /tmp/mesa-switch-build.log
+
+      - name: Collect NVK SDK files
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/nvk-sdk
+          mkdir -p /tmp/nvk-sdk/lib /tmp/nvk-sdk/include
+          VULKAN=$(find mesa-switch -type f -name libvulkan.a | head -1)
+          test -n "$VULKAN"
+          cp "$VULKAN" /tmp/nvk-sdk/lib/libvulkan.a
+          find mesa-switch -type f \( -name 'libnvk.a' -o -name 'libnak*.a' \) -exec cp {} /tmp/nvk-sdk/lib/ \;
+          if [ -d mesa-switch/include ]; then cp -a mesa-switch/include/. /tmp/nvk-sdk/include/; fi
+          ls -lh /tmp/nvk-sdk/lib/
+
+      - name: Upload NVK SDK
+        uses: actions/upload-artifact@v4
+        with:
+          name: downpour-switch-nvk-sdk
+          path: /tmp/nvk-sdk
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload Mesa build diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: downpour-switch-nvk-build-log
+          path: /tmp/mesa-switch-build.log
+          if-no-files-found: ignore
+          retention-days: 7
