@@ -114,6 +114,8 @@ jobs:
             test -d "$DEVKIT_ROOT/$d"
             sudo mv "$DEVKIT_ROOT/$d" "/opt/devkitpro/$d"
           done
+          chmod -R a+rX /opt/devkitpro
+          find /opt/devkitpro/devkitA64/bin /opt/devkitpro/tools/bin -type f -exec chmod a+x {} +
           echo "DEVKITPRO=/opt/devkitpro" >> "$GITHUB_ENV"
           echo "/opt/devkitpro/tools/bin:/opt/devkitpro/devkitA64/bin" >> "$GITHUB_PATH"
           /opt/devkitpro/devkitA64/bin/aarch64-none-elf-g++ --version
