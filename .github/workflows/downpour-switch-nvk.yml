@@ -54,7 +54,11 @@ jobs:
           if [ -d mesa-switch/include ]; then cp -a mesa-switch/include/. /tmp/nvk-sdk/include/; fi
           # Reuse the exact devkitPro toolchain that successfully built Mesa.
           docker start mesa-switch-build >/dev/null
-          docker cp mesa-switch-build:/opt/devkitpro /tmp/devkitpro
+          rm -rf /tmp/devkitpro
+          mkdir -p /tmp/devkitpro
+          for d in devkitA64 libnx portlibs tools; do
+            docker cp "mesa-switch-build:/opt/devkitpro/$d" "/tmp/devkitpro/$d"
+          done
           docker stop mesa-switch-build >/dev/null
           ls -lh /tmp/nvk-sdk/lib/
 
