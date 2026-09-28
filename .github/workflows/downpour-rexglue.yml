@@ -48,6 +48,17 @@ jobs:
           git config --global submodule.fetchJobs 1
           set -o pipefail
           python3 tools/fetch_thirdparty.py 2>&1 | tee /tmp/rexglue-thirdparty.log
+          # The SDK CMake checks for a .git marker to decide whether each
+          # vendored dependency is initialized. fetch_thirdparty.py copies
+          # source files intentionally without Git metadata, so add harmless
+          # directory markers for those checks.
+          python3 - <<'PY'
+          from pathlib import Path
+          root = Path("sdk/thirdparty")
+          for child in root.iterdir():
+              if child.is_dir() and any(child.iterdir()):
+                  (child / ".git").mkdir(exist_ok=True)
+          PY
 
       - name: Upload dependency log on failure
         if: failure()
